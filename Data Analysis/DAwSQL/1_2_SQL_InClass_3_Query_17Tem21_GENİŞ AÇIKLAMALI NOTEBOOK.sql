@@ -56,13 +56,13 @@ FROM sales.sales_summary
 -- önce kaynak tabloyu oluþturuyoruz. ben pivot table'ý veya aggregate iþlemini hangi tablodan oluþturmak istiyorum?
 -- ben kategorilere göre toplam fiyatlarý bulmak istiyorum.
 SELECT category, SUM(total_sales_price)
-FROM sales.sales_summary
+FROM sale.sales_summary
 GROUP BY Category
 
 -- þimdi category sütununun satýrlarýný (bisiklet kategorilerini) sütunlara alacak 
 -- ve total_sales_price'larý value olarak satýrlara getirecek þekilde pivot table yapalým
 SELECT *
-FROM sales.sales_summary
+FROM sale.sales_summary
 PIVOT
 (
 	SUM(total_sales_price)
@@ -81,13 +81,13 @@ PIVOT
 
 -- önce kaynak tabloyu belirtiyoruz. kaynak tablom bu query:
 SELECT Category, total_sales_price
-FROM sales.sales_summary
+FROM sale.sales_summary
 
 --- þimdi Pivot iþlemi sonucunda ortaya çýkacak tablo için  bir SELECT iþlemi daha yapmam gerekiyor.
 SELECT *  
 FROM 
 (SELECT Category, total_sales_price  -- bu parantezin içi kaynak tablom.
-FROM sales.sales_summary
+FROM sale.sales_summary
 ) A
 PIVOT
 (
@@ -106,22 +106,22 @@ PIVOT
 -- ben buna bir boyut daha eklemek istersem..
 	-- category sütununa göre gruplamýþtýk. bir de model_year gruplamasý olsun.
 SELECT category, model_year, SUM(total_sales_price)
-FROM sales.sales_summary
+FROM sale.sales_summary
 GROUP BY Category, Model_Year
 ORDER BY 1  -- bir de order by ekleyelim güzel gözüksün.
 --- þimdi bir kýrýlma daha bir boyut daha eklemiþ olduk. önceden sadecec kategorilere göre ayýrým yapýyordu
-	-- þimdi ise kategorilerin içinde model yýllara göre de ayýrým yaptýk.
+	-- þimdi ise kategorilerin içinde model yýllara göre de ayrým yaptýk.
 
 -- model_year boyutunu pivot table'a ekleyip görelim.
 	-- kaynak tablomun SELECT satýrýna model_year sütununu eklemeliyim.
 SELECT category, Model_Year, total_sales_price 
-			FROM SALES.sales_summary
+			FROM SALE.sales_summary
 
 SELECT *
 FROM
 			(
 			SELECT category, Model_Year, total_sales_price --model_year eklendi.
-			FROM SALES.sales_summary
+			FROM SALE.sales_summary
 			) A
 PIVOT
 (
@@ -140,14 +140,14 @@ PIVOT
 
 
 -- -------------------
-CREATE VIEW Brands_Categories AS
+CREATE VIEW Brand_Categories AS
 SELECT	category_name, brand_name
 FROM
 	(
 	SELECT
 		C.category_name AS category_name,
 		A.brand_name AS brand_name
-	FROM production.brands A, production.products B, production.categories C
+	FROM product.brand A, product.product B, product.category C
 	WHERE A.brand_id = B.brand_id AND B.category_id = c.category_id
 	GROUP BY C.category_name, A.brand_name
 	) A
@@ -210,19 +210,19 @@ IN	(
 ------------SINGLE ROW SUBQUERIES----------------
 
 SELECT *
-FROM sales.staffs --tüm çalýþanlarý ve çalýþtýklarý maðazalarý getirdim. 8.satýrda Kali Vargasý ve çalýþtýðý store'un id sini görebiliyorum.
+FROM sale.staff --tüm çalýþanlarý ve çalýþtýklarý maðazalarý getirdim. 8.satýrda Kali Vargasý ve çalýþtýðý store'un id sini görebiliyorum.
 
 SELECT *
-FROM sales.staffs
+FROM sale.staff
 WHERE first_name = 'Kali' AND last_name = 'Vargas' 
 -- staffs tablosunda first_name Kali ve last_name Vargas olan satýrý getir dedik.
 -- ve store_id sinin 3 olduðunu gördük. Aþaðýda WHERE store_id=3 d e diyebiliriz.
 
 -- staffs tablosunda store_id= (subquery'den gelen store_id) þeklinde bir query kuracaðýz.
 SELECT *
-FROM sales.staffs
+FROM sale.staff
 WHERE store_id = (SELECT store_id
-				  FROM sales.staffs
+				  FROM sale.staff
 				  WHERE first_name = 'Kali' and last_name = 'Vargas')
 
 
@@ -233,16 +233,16 @@ WHERE store_id = (SELECT store_id
 
 -- Venita Daniel'in staff_id si kimin manager_id'si ise onlarý listeleyeceðiz.
 SELECT *
-FROM sales.staffs
+FROM sale.staff
 WHERE manager_id = (                -- Venita'nýn staff id sinin manager_id si olan personeli tanýmladýk.
 					SELECT staff_id		
-					FROM sales.staffs
+					FROM sale.staff
 					WHERE first_name = 'Venita' AND last_name = 'Daniel' -- subquery'de Venita'nýn staff id sini çektik.
 					)
 
 -- alternatif çözüm (self join ile):
 SELECT A.*
-FROM sales.staffs A, sales.staffs B
+FROM sale.staff A, sale.staff B
 WHERE A.manager_id = B.staff_id
 AND B.first_name = 'Venita' AND B.last_name = 'Daniel'
 -- burada A.manager_id = B.staff_id dediðimiz için (yani A'nin manager_id'si B'nin staff_id'si olanlara eþit olma durumu) B.first_name='Venita' yaptýk. 
@@ -255,16 +255,16 @@ AND B.first_name = 'Venita' AND B.last_name = 'Daniel'
 
 -- önce Rowlet Bikes store'un bulunduðu city'i bulalým. (sales.stores tablosunda city isimleri var)
 SELECT city
-FROM sales.stores
+FROM sale.store
 WHERE store_name = 'Rowlett Bikes' 
 -- Rowlet þehrinde olduðunu gördük. bu query aþaðýda ana query'mizin subquery'si olacak.
 
 -- þimdi sales.custormers tablosunda city=Rowlet olan verileri görelim.
 SELECT *
-FROM sales.customers
+FROM sale.customer
 WHERE city= (
 			SELECT city
-			FROM sales.stores
+			FROM sale.store
 			WHERE store_name = 'Rowlett Bikes'
 			)
 
@@ -275,17 +275,17 @@ WHERE city= (
 
 --önce subquery'i belirlemekle baþlayalým. bahsedilen bisikletin fiyatýný çekelim.
 select list_price
-from production.products 
+from product.product
 where product_name = 'Trek CrossRip+ - 2018',
 
 -- þimdi listenmesi istenen sütunlarýn hangi listelerde olduðuna bakarak o listeleri join edeceðim 
 	-- ve subquery'i WHERE satýrýnda yerine koyarak query'mi oluþturacaðým.
 	-- istenen sütunlar: product_id, product_name, model_year, list_price, brand_name, category_name
 SELECT DISTINCT A.product_id, A.product_name, A.model_year, A.list_price, B.brand_name, C.category_name
-FROM production.products AS A, production.brands AS B, production.categories AS C
+FROM product.product AS A, product.brand AS B, product.category AS C
 WHERE A.brand_id = B.brand_id AND A.category_id = C.category_id
 AND list_price > (SELECT list_price
-					FROM production.products
+					FROM product.product
 					WHERE product_name= 'Trek CrossRip+ - 2018')
 -- WHERE satýrýmda hem listelerimi join ettim hem de SUBQUERY kullanarak filtreleme þartýmý ekledim.
 -- DISTICT attým ki tekrarlayan sütunlar gelmesin. 
@@ -304,7 +304,7 @@ AND list_price > (SELECT list_price
 -- önce Arla Ellis'in sipariþ verdiði tarihi bulalým ki onu ana query de subquery olarak kullanabilelim. 
 	-- tarihler orders tablosunda, isimler customers tablosunda olduðu için orders ve customers tablolarýný birleþtirmem gerekiyor.
 SELECT *
-FROM sales.customers A, sales.orders B
+FROM sale.customer A, sale.orders B
 WHERE A.customer_id = B.customer_id
 and A.first_name = 'Arla' and A.last_name='Ellis'
 -- bu isimle tek bir customer var ve bir order var
@@ -314,10 +314,10 @@ and A.first_name = 'Arla' and A.last_name='Ellis'
 
 -- þimdi istenen sütunlarla birlikte query'mizi yazalým ve WHERE satýrýndaki condition'da yukardaki subquery'i kullanalým.
 SELECT A.customer_id, A.first_name, A.last_name, B.order_date
-FROM sales.customers A, sales.orders B
+FROM sale.customer A, sale.orders B
 WHERE order_date < (
 					SELECT B.order_date
-					FROM sales.customers A, sales.orders B
+					FROM sale.customer A, sale.orders B
 					where A.customer_id = B.customer_id
 					and A.first_name = 'Arla' and A.last_name='Ellis'
 					)
@@ -335,7 +335,7 @@ WHERE order_date < (
 
 -- önce Holbrook þehrindeki customer id leri görelim.
 select customer_id
-from sales.customers 
+from sale.customer 
 where city='Holbrook'
 
 -- orders tablosunda 1615 order_date var.
@@ -345,10 +345,10 @@ FROM sales.orders
 -- yukardaki query'i subquery yaparak order_date'i filtreleyelim 
 	--ve sadece Holbrook þehrinde yaþayan customer'larýn order_date lerini getirsin.
 SELECT order_date
-FROM sales.orders
+FROM sale.[orders]
 WHERE customer_id IN (
 					SELECT customer_id
-					FROM sales.customers 
+					FROM sale.customer
 					WHERE city='Holbrook'
 					)
 -- Holbrook þehrinde yaþayan müþterilere ait 3 order_date olduðunu gördüm.
@@ -370,7 +370,7 @@ WHERE customer_id NOT IN (
 
 
 SELECT category_id
-FROM	production.categories
+FROM	product.category
 WHERE	category_name IN ('Cruisers Bicycles', 'Mountain Bikes', 'Road Bikes')
 -- bu kategorilerin categori id lerini çektim. bunu ana query de WHERE satýrýnda kullanacaðým.
 
@@ -513,7 +513,8 @@ WHERE state NOT IN (
 					WHERE A.product_id = B.product_id
 					and B.order_id = C.order_id
 					and C.customer_id = D.customer_id 
-					and A.product_name = 'Trek Remedy 9.8 - 2017')					
+					and A.product_name = 'Trek Remedy 9.8 - 2017')		
+					
 -- NOT IN ile bu product'ýn sipariþinin verildiði (çünkü state'i sales.customers tablosundan çekiyoruz) state'lerin dýþýnda kalan state'leri getir demiþ olduk.
 
 
