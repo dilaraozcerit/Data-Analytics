@@ -1,0 +1,34 @@
+colors ={"neutral": "gray", "positive": "green", "negative": "red"}
+ax = sns.countplot(data = df, x ="airline", hue = "airline_sentiment", palette=colors)
+for p in ax.containers:
+    ax.bar_label(p)
+
+
+
+plt.rcParams["figure.figsize"] = (10,6)
+ax = sns.countplot(data =df, x ="negativereason", order=df.negativereason.value_counts().index, )
+ax.bar_label(ax.containers[0])
+plt.xticks(rotation =90);
+
+
+
+
+plt.figure(figsize=(10,6))
+ax = sns.countplot(x = "number_project", data = df)
+for p in ax.patches:
+  _x = p.get_x() + p.get_width() / 2
+  _y = p.get_y() + p.get_height() + (p.get_height()*0.01)
+  value = '{:}'.format(p.get_height())
+  ax.text(_x, _y, value, ha="center") 
+
+
+
+plt.figure(figsize=(8,8))
+explode = [0, 0.1]
+plt.pie(df['left'].value_counts(), explode=explode, autopct='%1.1f%%', shadow=True,startangle=140)
+plt.legend(labels=['continued','left'])
+plt.title('"left" Distribution')
+plt.axis('off')
+
+
+
